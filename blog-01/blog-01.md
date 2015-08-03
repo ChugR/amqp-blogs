@@ -119,75 +119,41 @@ Let's get going with HelloWorld. This example is file *HelloWorld-simple.cs* in 
 
 ### Source Code
      
-<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><table><tr><td><pre style="margin: 0; line-height: 125%"> 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24
-25
-26
-27
-28
-29
-30
-31
-32
-33
-34</pre></td><td><pre style="margin: 0; line-height: 125%"><span style="color: #008800; font-weight: bold">using</span> <span style="color: #0e84b5; font-weight: bold">System</span>;
-<span style="color: #008800; font-weight: bold">using</span> <span style="color: #0e84b5; font-weight: bold">Amqp</span>;
-
-<span style="color: #008800; font-weight: bold">namespace</span> <span style="color: #0e84b5; font-weight: bold">HelloWorld</span>
-{
-  <span style="color: #008800; font-weight: bold">class</span> <span style="color: #BB0066; font-weight: bold">HelloWorld</span>
-  {
-    <span style="color: #008800; font-weight: bold">static</span> <span style="color: #008800; font-weight: bold">void</span> <span style="color: #0066BB; font-weight: bold">Main</span>(<span style="color: #333399; font-weight: bold">string</span>[] args)
-    {
-      <span style="color: #333399; font-weight: bold">string</span> brokerUrl = <span style="background-color: #fff0f0">&quot;amqp://localhost:5672&quot;</span>;
-      <span style="color: #333399; font-weight: bold">string</span> address   = <span style="background-color: #fff0f0">&quot;my_queue&quot;</span>;
-
-      Address    brokerAddr = <span style="color: #008800; font-weight: bold">new</span> Address(brokerUrl);
-      Connection connection = <span style="color: #008800; font-weight: bold">new</span> Connection(brokerAddr);
-      Session    session    = <span style="color: #008800; font-weight: bold">new</span> Session(connection);
-
-      SenderLink   sender   = <span style="color: #008800; font-weight: bold">new</span>   SenderLink(session, <span style="background-color: #fff0f0">&quot;helloworld-sender&quot;</span>,   address);
-      ReceiverLink receiver = <span style="color: #008800; font-weight: bold">new</span> ReceiverLink(session, <span style="background-color: #fff0f0">&quot;helloworld-receiver&quot;</span>, address);
-
-      Message helloOut = <span style="color: #008800; font-weight: bold">new</span> Message(<span style="background-color: #fff0f0">&quot;Hello World!&quot;</span>);
-      sender.Send(helloOut);
-
-      Message helloIn = receiver.Receive();
-      receiver.Accept(helloIn);
-
-      Console.WriteLine(helloIn.Body.ToString());
-
-      receiver.Close();
-      sender.Close();
-      session.Close();
-      connection.Close();
-    }
-  }
-}
-</pre></td></tr></table></div>
-
+<pre style="margin:0em; overflow:auto; background-color:#ffffff;"><code style="font-family:Consolas,&quot;Courier New&quot;,Courier,Monospace; font-size:10pt; color:#000000;"> 1 <span style="color:#0000ff;">using</span> System;
+ 2 <span style="color:#0000ff;">using</span> Amqp;
+ 3 
+ 4 <span style="color:#0000ff;">namespace</span> HelloWorld
+ 5 {
+ 6   <span style="color:#0000ff;">class</span> HelloWorld
+ 7   {
+ 8     <span style="color:#0000ff;">static</span> <span style="color:#0000ff;">void</span> Main(<span style="color:#0000ff;">string</span>[] args)
+ 9     {
+10       <span style="color:#0000ff;">string</span> brokerUrl = <span style="color:#a31515;">"amqp://localhost:5672"</span>;
+11       <span style="color:#0000ff;">string</span> address   = <span style="color:#a31515;">"my_queue"</span>;
+12 
+13       Address    brokerAddr = <span style="color:#0000ff;">new</span> Address(brokerUrl);
+14       Connection connection = <span style="color:#0000ff;">new</span> Connection(brokerAddr);
+15       Session    session    = <span style="color:#0000ff;">new</span> Session(connection);
+16 
+17       SenderLink   sender   = <span style="color:#0000ff;">new</span>   SenderLink(session, <span style="color:#a31515;">"helloworld-sender"</span>,   address);
+18       ReceiverLink receiver = <span style="color:#0000ff;">new</span> ReceiverLink(session, <span style="color:#a31515;">"helloworld-receiver"</span>, address);
+19 
+20       Message helloOut = <span style="color:#0000ff;">new</span> Message(<span style="color:#a31515;">"Hello World!"</span>);
+21       sender.Send(helloOut);
+22 
+23       Message helloIn = receiver.Receive();
+24       receiver.Accept(helloIn);
+25 
+26       Console.WriteLine(helloIn.Body.ToString());
+27 
+28       receiver.Close();
+29       sender.Close();
+30       session.Close();
+31       connection.Close();
+32     }
+33   }
+34 }
+</code></pre>
 ### Code Notes
 
  * Line 2 The *using* directive enables unqualified use of the AMQP.Net Lite objects in the *AMQP* namespace.
