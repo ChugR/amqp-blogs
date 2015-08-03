@@ -115,44 +115,78 @@ AMQP 1.0 Messaging has a rich and well structured design to suit virtually any m
 
 ## Hello World Example
 
-Let's get going with HelloWorld.
+Let's get going with HelloWorld. This example is file *HelloWorld-simple.cs* in the SDK.
 
 ### Source Code
      
-     1 using System;
-     2 using Amqp;
-     3
-     4 namespace HelloWorld
-	 5 {
-	 6   class HelloWorld
-  	 7   {
-	 8     static void Main(string[] args)
-	 9     {
-	10       string brokerUrl = "amqp://localhost:5672";
-	11       string address   = "my_queue";
-	12
-	13       Address    brokerAddr = new Address(brokerUrl);
-	14       Connection connection = new Connection(brokerAddr);
-	15       Session    session    = new Session(connection);
-	16 
-	17       SenderLink   sender   = new   SenderLink(session, "helloworld-sender",   address);
-	18       ReceiverLink receiver = new ReceiverLink(session, "helloworld-receiver", address);
-	19 
-	20       Message helloOut = new Message("Hello World!");
-	21       sender.Send(helloOut);
-	22 
-	23       Message helloIn = receiver.Receive();
-	24       receiver.Accept(helloIn);
-	25
-	26       Console.WriteLine(helloIn.Body.ToString());
-	27 
-	28       receiver.Close();
-	29       sender.Close();
-	30       session.Close();
-	31       connection.Close();
-	32     }
-	33   }
-	34 }
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><table><tr><td><pre style="margin: 0; line-height: 125%"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34</pre></td><td><pre style="margin: 0; line-height: 125%"><span style="color: #008800; font-weight: bold">using</span> <span style="color: #0e84b5; font-weight: bold">System</span>;
+<span style="color: #008800; font-weight: bold">using</span> <span style="color: #0e84b5; font-weight: bold">Amqp</span>;
+
+<span style="color: #008800; font-weight: bold">namespace</span> <span style="color: #0e84b5; font-weight: bold">HelloWorld</span>
+{
+  <span style="color: #008800; font-weight: bold">class</span> <span style="color: #BB0066; font-weight: bold">HelloWorld</span>
+  {
+    <span style="color: #008800; font-weight: bold">static</span> <span style="color: #008800; font-weight: bold">void</span> <span style="color: #0066BB; font-weight: bold">Main</span>(<span style="color: #333399; font-weight: bold">string</span>[] args)
+    {
+      <span style="color: #333399; font-weight: bold">string</span> brokerUrl = <span style="background-color: #fff0f0">&quot;amqp://localhost:5672&quot;</span>;
+      <span style="color: #333399; font-weight: bold">string</span> address   = <span style="background-color: #fff0f0">&quot;my_queue&quot;</span>;
+
+      Address    brokerAddr = <span style="color: #008800; font-weight: bold">new</span> Address(brokerUrl);
+      Connection connection = <span style="color: #008800; font-weight: bold">new</span> Connection(brokerAddr);
+      Session    session    = <span style="color: #008800; font-weight: bold">new</span> Session(connection);
+
+      SenderLink   sender   = <span style="color: #008800; font-weight: bold">new</span>   SenderLink(session, <span style="background-color: #fff0f0">&quot;helloworld-sender&quot;</span>,   address);
+      ReceiverLink receiver = <span style="color: #008800; font-weight: bold">new</span> ReceiverLink(session, <span style="background-color: #fff0f0">&quot;helloworld-receiver&quot;</span>, address);
+
+      Message helloOut = <span style="color: #008800; font-weight: bold">new</span> Message(<span style="background-color: #fff0f0">&quot;Hello World!&quot;</span>);
+      sender.Send(helloOut);
+
+      Message helloIn = receiver.Receive();
+      receiver.Accept(helloIn);
+
+      Console.WriteLine(helloIn.Body.ToString());
+
+      receiver.Close();
+      sender.Close();
+      session.Close();
+      connection.Close();
+    }
+  }
+}
+</pre></td></tr></table></div>
 
 ### Code Notes
 
@@ -195,16 +229,20 @@ AMQP.Net Lite accepts a formatted [URL](https://en.wikipedia.org/wiki/Uniform_re
 
     amqp[s] :// [user:[password]@] domain[:port] [/path]
     
- 1. The scheme **amqp** specifies an unencrytped connection and **amqps** specifies an encrypted connection.
+ 1. The scheme 
+     - **amqp** specifies an unencrytped connection
+     - **amqps** specifies an encrypted connection.
  2. **user** and **password** are optional credentials. When specified AMQP.Net Lite uses them during the [SASL](https://en.wikipedia.org/wiki/Simple_Authentication_and_Security_Layer) negotiation phase of AMQP connection establishment.
  3. **domain** is the domain name or literal IP numeric address of the target peer system.
- 4. **port** number, given in decimal, is optional. If omitted, the default for the scheme is used: 5672 for amqp and 5671 for amqps.
+ 4. **port** number, given in decimal, is optional. If omitted, the default for the scheme is used: 
+     - 5672 for amqp
+     - 5671 for amqps
  5. **path** is part of the parsed Address class but is not used as part of the connection.
 
 ## Conclusion
 
 Using AMQP.Net Lite it is easy to get going in the AMQP messaging space. With AMQP you can operate with Red Hat A-MQ brokers and with services in the Azure cloud with equal ease.
 
-In a future blog post I want to share how to secure your AMQP communications with TLS/SLL. Also, I have some tools for AMQP both for study and problem analysis.
+In a future blog post I want to share how to secure your AMQP communications with TLS/SLL. 
  
 Happy Messaging!
