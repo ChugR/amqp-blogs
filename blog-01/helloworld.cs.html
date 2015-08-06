@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>HelloWorld.cs</title>
+ </head>
+<body>
+<a href="helloworld.cs">Undecorated source</a>
+
+<h1>HelloWorld.cs</h1>
+
+<pre style="margin: 0; overflow: auto; background-color: #ffffff;"><code style="font-family: Consolas, 'Courier New', Courier, Monospace; font-size: 11pt; color: #000000;"> 1 <span style="color: #0000ff;">using</span> System;
+ 2 <span style="color: #0000ff;">using</span> Amqp;
+ 3 
+ 4 <span style="color: #0000ff;">namespace</span> HelloWorld
+ 5 {
+ 6   <span style="color: #0000ff;">class</span> HelloWorld
+ 7   {
+ 8     <span style="color: #0000ff;">static</span> <span style="color: #0000ff;">void</span> Main(<span style="color: #0000ff;">string</span>[] args)
+ 9     {
+10       <span style="color: #0000ff;">string</span> brokerUrl = <span style="color: #a31515;">"amqp://localhost:5672"</span>;
+11       <span style="color: #0000ff;">string</span> address   = <span style="color: #a31515;">"my_queue"</span>;
+12 
+13       Address    brokerAddr = <span style="color: #0000ff;">new</span> Address(brokerUrl);
+14       Connection connection = <span style="color: #0000ff;">new</span> Connection(brokerAddr);
+15       Session    session    = <span style="color: #0000ff;">new</span> Session(connection);
+16 
+17       SenderLink   sender   = <span style="color: #0000ff;">new</span>   SenderLink(session, <span style="color: #a31515;">"sender"</span>,   address);
+18       ReceiverLink receiver = <span style="color: #0000ff;">new</span> ReceiverLink(session, <span style="color: #a31515;">"receiver"</span>, address);
+19 
+20       Message helloOut = <span style="color: #0000ff;">new</span> Message(<span style="color: #a31515;">"Hello World!"</span>);
+21       sender.Send(helloOut);
+22 
+23       Message helloIn = receiver.Receive();
+24       receiver.Accept(helloIn);
+25 
+26       Console.WriteLine(helloIn.Body.ToString());
+27 
+28       receiver.Close();
+29       sender.Close();
+30       session.Close();
+31       connection.Close();
+32     }
+33   }
+34 }
+</code></pre>
+</body>
+</html>

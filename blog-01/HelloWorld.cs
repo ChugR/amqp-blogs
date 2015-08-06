@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Amqp;
 
 namespace HelloWorld
@@ -14,8 +14,8 @@ namespace HelloWorld
       Connection connection = new Connection(brokerAddr);
       Session    session    = new Session(connection);
 
-      SenderLink   sender   = new   SenderLink(session, "helloworld-sender",   address);
-      ReceiverLink receiver = new ReceiverLink(session, "helloworld-receiver", address);
+      SenderLink   sender   = new   SenderLink(session, "sender",   address);
+      ReceiverLink receiver = new ReceiverLink(session, "receiver", address);
 
       Message helloOut = new Message("Hello World!");
       sender.Send(helloOut);
