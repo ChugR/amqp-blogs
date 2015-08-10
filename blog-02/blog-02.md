@@ -1,6 +1,6 @@
 # AMQP.Net Lite Client, A-MQ Broker, and TLS/SSL
 
-In this post I'm going to show how to encrypt your link so that your communications are secured. 
+In this post I'm going to show how to encrypt your communications between the broker and the client. 
 
 This is not a formula for securing a large, scalable, public installation. Rather it will demonstrate the concepts and give you some recipes you can use in your test setups to show that your broker and clients are using security credentials properly.
 
@@ -28,11 +28,11 @@ The AMQP.Net Lite Client and the Red Hat JBoss A-MQ Broker use different securit
  * AMQP.Net Lite Client uses [SChannel](https://msdn.microsoft.com/en-us/library/windows/desktop/ms678421%28v=vs.85%29.aspx)
  * Red Hat JBoss A-MQ Broker uses [javax.net.ssl](http://docs.oracle.com/cd/B19306_01/java.102/b14355/sslthin.htm#BABCBGDB).
 
-In either case we must configure the security provider with the proper certificates and then the provider sets up SSL/TLS for us.
+In either case we must configure the security provider with the proper certificates before the provider can set up secure SSL/TLS communication channels.
 
 ## Certificate Generation Tools
 
-So where do we get certificates? There are plenty of certificate generation tools from which to choose:
+In this example we are going to generate all the certificates locally using a publicly available tool. There are plenty of certificate generation tools from which to choose:
 
  * OpenSSL
  * Java Keytool
@@ -40,7 +40,7 @@ So where do we get certificates? There are plenty of certificate generation tool
  * Microsoft Makecert
  * Portecle
  * and more ...
-</div>
+
 
 For this article I choose to use [Java Keytool](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html) from [Oracle](http://www.oracle.com/technetwork/java/javase/downloads/index.html) to run on a Windows host. To get *keytool*, install Java Platform, Standard Edition (Java SE) and add the kit to your execution environment. These settings add version jdk1.7.0_79 to a process environment:
 
@@ -75,153 +75,7 @@ For more complicated installations you may want more descriptive file names. The
 
 ### Certificate generation script
 
-TODO: BAT file syntax highlighting, please.
-
-    REM  ------------------------------------------------------------------------------------
-    REM  Copyright (c) Red Hat, Inc.
-    REM  All rights reserved. 
-    REM  
-    REM  Licensed under the Apache License, Version 2.0 (the ""License""); you may not use this 
-    REM  file except in compliance with the License. You may obtain a copy of the License at 
-    REM  http://www.apache.org/licenses/LICENSE-2.0  
-    REM  
-    REM  THIS CODE IS PROVIDED *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-    REM  EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED WARRANTIES OR 
-    REM  CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE, MERCHANTABLITY OR 
-    REM  NON-INFRINGEMENT. 
-    REM 
-    REM  See the Apache Version 2.0 License for specific language governing permissions and 
-    REM  limitations under the License.
-    REM  ------------------------------------------------------------------------------------
-    REM
-    REM file: gen-win-ssl-certs.bat
-    REM date: 2015-07-01
-    REM what: Procedure to create client auth certificate set for an ActiveMQ broker
-    REM       and an AMQPNet.Lite client. "keytool" is supplied by jdk.
-    REM       A user may change TODO: settings to match his setup.
-    REM
-    REM These files are created:
-    REM broker-jks.keystore   BROKER_KEYSTORE
-    REM                         ActiveMQ broker conf\activemq.xml broker sslContext.
-    REM broker-jks.truststore BROKER_TRUSTSTORE
-    REM                         ActiveMQ broker conf\activemq.xml broker sslContext.
-    REM ca.crt                CA_CERT
-    REM                         installed in client machine 
-    REM                         Trusted Root Certification Authorities store
-    REM client.p12            CLIENT_PRIVATE_KEYS
-    REM                         installed in client machine Personal Certificates store.
-    REM client.crt            CLIENT_CERT
-    REM                         referred to/loaded by the C# application code.
-    REM
-    REM * The BROKER_KEYSTORE and BROKER_TRUSTSTORE do not need to be installed. The ActiveMQ
-    REM   broker refers to these files in conf\activemq.xml.
-    REM * CA_CERT and CLIENT_PRIVATE_KEYS are installed in the certificates stores 
-    REM   of the client system.
-    REM * CLIENT_CERT is used in creating an X509CertificateCollection. It is the certfile in:
-    REM     ClientCertificates.Add(X509Certificate.CreateFromCertFile(certfile))
-    REM
-    REM The password for every store and certificate is "password".
-    REM TODO: Use better passwords.
-    
-    REM All certificates are created in this subfolder
-    REM TODO: Define where certificates are generated
-    SET CERT_LOC=%CD%\certs
-    
-    REM Define the CN of the self-signed certificate authority.
-    REM TODO: Define the CA's CN
-    SET CA_CN=reallly-trust-me.org
-    
-    REM Define the CN of the broker.
-    REM This is the fqdn or hostname of the machine on which the ActiveMQ broker is running.
-    REM TODO: Define the broker CN:
-    SET BROKER_CN=71.71.71.71
-    
-    REM Define the CN of the client. A client presenting this certificate will be authenticated
-    REM as this user name in the ActiveMQ broker.
-    REM TODO: Define the client CN
-    SET CLIENT_CN=client
-    
-    REM Define file names
-    SET          CA_KEYSTORE=ca-jks.keystore
-    SET      BROKER_KEYSTORE=broker-jks.keystore
-    SET      CLIENT_KEYSTORE=client-jks.keystore
-    SET    BROKER_TRUSTSTORE=broker-jks.truststore
-    SET              CA_CERT=ca.crt
-    SET BROKER_CERT_SIGN_REQ=broker.csr
-    SET          BROKER_CERT=broker.crt
-    SET CLIENT_CERT_SIGN_REQ=client.csr
-    SET          CLIENT_CERT=client.crt
-    SET  CLIENT_PRIVATE_KEYS=client.p12
-    
-    REM Define some repeated patterns identifying the various stores
-    SET     CA_STORE=-storetype jks -keystore     %CA_KEYSTORE% -storepass password
-    SET BROKER_STORE=-storetype jks -keystore %BROKER_KEYSTORE% -storepass password
-    SET CLIENT_STORE=-storetype jks -keystore %CLIENT_KEYSTORE% -storepass password
-    SET KEY_PASSWORD=-keypass password
-    
-    REM Recreate entire cert folder
-    rmdir /s /q %CERT_LOC%
-    timeout /t 1 /nobreak > nul
-    mkdir       %CERT_LOC%
-    pushd       %CERT_LOC%
-    
-    REM Create the certificate authority CA
-    REM -----------------------------------
-    keytool %CA_STORE% %KEY_PASSWORD% -alias ca -genkey ^
-            -dname "O=Reallly Trust Me Inc.,CN=%CA_CN%" -validity 9999 -ext bc:c=ca:true
-    keytool %CA_STORE%                -alias ca -exportcert -rfc > %CA_CERT%
-    
-    REM Create a key pair for the broker and sign it with the CA
-    REM --------------------------------------------------------
-    keytool %BROKER_STORE% %KEY_PASSWORD% -alias broker -genkey -keyalg RSA -keysize 2048 ^
-            -dname "O=Broker,CN=%BROKER_CN%" -validity 9999 -ext bc=ca:false -ext eku=serverAuth
-    
-    keytool %BROKER_STORE% -alias broker -certreq    -file %BROKER_CERT_SIGN_REQ%
-    keytool %CA_STORE%     -alias ca -gencert -rfc -infile %BROKER_CERT_SIGN_REQ% ^
-            -outfile %BROKER_CERT% -ext bc=ca:false -ext eku=serverAuth
-    
-    REM Import CA and broker certificates into broker keystore
-    REM ------------------------------------------------------
-    keytool %BROKER_STORE% %KEY_PASSWORD% -importcert -alias ca     -file     %CA_CERT% -noprompt
-    keytool %BROKER_STORE% %KEY_PASSWORD% -importcert -alias broker -file %BROKER_CERT%
-    
-    REM Create a key pair for the client and sign it with the CA
-    REM --------------------------------------------------------
-    keytool %CLIENT_STORE% %KEY_PASSWORD% -alias client -genkey -keyalg RSA -keysize 2048 ^
-            -dname "O=Client,CN=%CLIENT_CN%" -validity 9999 -ext bc=ca:false -ext eku=clientAuth
-    
-    keytool %CLIENT_STORE% -alias client -certreq    -file %CLIENT_CERT_SIGN_REQ%
-    keytool %CA_STORE%     -alias ca -gencert -rfc -infile %CLIENT_CERT_SIGN_REQ% ^
-            -outfile %CLIENT_CERT% -ext bc=ca:false -ext eku=clientAuth
-    
-    REM Import CA and client certs into client keystore
-    REM -----------------------------------------------
-    keytool %CLIENT_STORE% %KEY_PASSWORD% -importcert -alias ca     -file     %CA_CERT% -noprompt
-    keytool %CLIENT_STORE% %KEY_PASSWORD% -importcert -alias client -file %CLIENT_CERT% -noprompt
-    
-    REM Export client private key and cert trust chain to Personal Information Exchange .p12
-    REM ------------------------------------------------------------------------------------
-    keytool -v -importkeystore -srckeystore %CLIENT_KEYSTORE% -srcstorepass password ^
-            -srcalias client -destkeystore %CLIENT_PRIVATE_KEYS% -deststorepass password ^
-    		-destkeypass password -deststoretype PKCS12 -destalias client
-    
-    REM Create a trust store for the broker, import the CA cert
-    REM -------------------------------------------------------
-    keytool -storetype jks -keystore %BROKER_TRUSTSTORE% -storepass password %KEY_PASSWORD% ^
-            -importcert -alias     ca -file     %CA_CERT% -noprompt
-    
-    REM Make client cert legible in .NET
-    REM --------------------------------
-    dos2unix %CLIENT_CERT%
-    
-    REM Clean up
-    REM --------
-    del %CA_KEYSTORE%
-    del %BROKER_CERT_SIGN_REQ%
-    del %BROKER_CERT%
-    del %CLIENT_CERT_SIGN_REQ%
-    del %CLIENT_STORE%
-    popd
+Generate your certificate files with [this script](https://people.apache.org/~chug/blog/blog-02/gen-win-ssl-certs.bat.html)
 
 ### Distribute Certificates
 
@@ -320,105 +174,12 @@ In order to use TLS and client certficates then the certificates with the client
 
 ### Hello World Example Using Client Certificates
 
-Before a client will return a certificate to the broker, the AMQP.Net Lite library must be told which certificates to use. In the current release of AMQP.Net Lite this may be done using the async task methods shown in the following example. This example is available in Red Hat JBoss A-MQ AMQP.Net Lite Client SDK in *HelloWorld-client-certs.cs*.
+Before a client will return a certificate to the broker, the AMQP.Net Lite library must be told which certificates to use. In the current release of AMQP.Net Lite this may be done using the async task methods shown in the following example. This example is available in Red Hat JBoss A-MQ AMQP.Net Lite Client SDK. See file [HelloWorld-client-certs.cs](https://people.apache.org/~chug/blog/wordpress-02/HelloWorld-client-certs.cs.html).
 
-     1 //  ------------------------------------------------------------------------------------
-     2 //  Copyright (c) 2015 Red Hat, Inc.
-     3 //  All rights reserved.
-     4 //
-     5 //  Licensed under the Apache License, Version 2.0 (the ""License""); you may not use this
-     6 //  file except in compliance with the License. You may obtain a copy of the License at
-     7 //  http://www.apache.org/licenses/LICENSE-2.0
-     8 //
-     9 //  THIS CODE IS PROVIDED *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-    10 //  EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED WARRANTIES OR
-    11 //  CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE, MERCHANTABLITY OR
-    12 //  NON-INFRINGEMENT.
-    13 //
-    14 //  See the Apache Version 2.0 License for specific language governing permissions and
-    15 //  limitations under the License.
-    16 //  ------------------------------------------------------------------------------------
-    17 
-    18 //
-    19 // HelloWorld-client-certs
-    20 //
-    21 // Command line:
-    22 //   HelloWorld-client-certs [brokerUrl [brokerEndpointAddress]]
-    23 //
-    24 using System;
-    25 using System.Linq;
-    26 using Amqp;
-    27 using Amqp.Framing;
-    28 using Amqp.Types;
-    29 using System.Security;
-    30 using System.Security.Cryptography;
-    31 using System.Security.Cryptography.X509Certificates;
-    32 using System.Security.Permissions;
-    33 using System.Threading;
-    34 using System.Threading.Tasks;
-    35 
-    36 namespace HelloWorld_simple
-    37 {
-    38   class HelloWorld_simple
-    39   {
-    40     static async Task<int> SslConnectionTestAsync(string brokerUrl, string address, string certfile)
-    41     {
-    42       try
-    43       {
-    44         ConnectionFactory factory = new ConnectionFactory();
-    45         factory.TCP.NoDelay = true;
-    46         factory.TCP.SendBufferSize = 16 * 1024;
-    47         factory.TCP.SendTimeout = 30000;
-    48         factory.TCP.ReceiveBufferSize = 16 * 1024;
-    49         factory.TCP.ReceiveTimeout = 30000;
-    50           
-    51         factory.SSL.RemoteCertificateValidationCallback = (a, b, c, d) => true;
-    52         factory.SSL.ClientCertificates.Add(X509Certificate.CreateFromCertFile(certfile));
-    53         factory.SSL.CheckCertificateRevocation = false;
-    54           
-    55         factory.AMQP.MaxFrameSize = 64 * 1024;
-    56         factory.AMQP.HostName = "host.example.com";
-    57         factory.AMQP.ContainerId = "amq.topic";
-    58            
-    59         Address sslAddress = new Address(brokerUrl);
-    60         Connection connection = await factory.CreateAsync(sslAddress);
-    61 
-    62         Session session = new Session(connection);
-    63         SenderLink sender = new SenderLink(session, "sender1", address);
-    64         ReceiverLink receiver = new ReceiverLink(session, "helloworld-receiver", address);
-    65            
-    66         Message helloOut = new Message("Hello - using client cert");
-    67         await sender.SendAsync(helloOut);
-    68 
-    69         Message helloIn = await receiver.ReceiveAsync();
-    70         receiver.Accept(helloIn);
-    71 
-    72         await connection.CloseAsync();
-    73 
-    74         Console.WriteLine("{0}", helloIn.Body.ToString());
-    75 
-    76         Console.WriteLine("Press enter key to exit...");
-    77         Console.ReadLine();
-    78         return 0;
-    79       }
-    80       catch (Exception e)
-    81       {
-    82         Console.WriteLine("Exception {0}.", e);
-    83         return 1;
-    84       }
-    85     }
-    86 
-    87     static void Main(string[] args)
-    88     {
-    89       string broker = args.Length >= 1 ? args[0] : "amqps://client:password@host.example.com:5671";
-    90       string address = args.Length >= 2 ? args[1] : "amq.topic";
-    91       Task<int> task = SslConnectionTestAsync(broker, address, "D:\\FULL\\PATH\\TO\\client.crt");
-    92       task.Wait();
-    93     }
-    94   }
-    95 }
+In this example the client certificate file *client.crt* is added to the list of certificates to be used during SChannel connection startup. 
 
-In this example the client certificate file *client.crt* is referenced in Line 91. Later (Line 52) the file is added to the list of certificates to be used during SChannel connection startup. 
+    factory.SSL.ClientCertificates.Add(
+        X509Certificate.CreateFromCertFile(certfile));
 
 ## Conclusion
 

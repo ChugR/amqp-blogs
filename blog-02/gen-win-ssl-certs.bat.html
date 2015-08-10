@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>gen-win-ssl-certs.bat</title>
+ </head>
+<body>
+<a href="gen-win-ssl-certs.bat.txt">Undecorated source</a>
+
+<h1>gen-win-ssl-certs.bat</h1>
+
+<pre style='color:#000020;background:#f6f8ff;'><span style='color:#200080; font-weight:bold; '>REM  </span><span style='color:#595979; '>------------------------------------------------------------------------------------</span>
+<span style='color:#200080; font-weight:bold; '>REM  </span><span style='color:#595979; '>Copyright (c) Red Hat, Inc.</span>
+<span style='color:#200080; font-weight:bold; '>REM  </span><span style='color:#595979; '>All rights reserved. </span>
+<span style='color:#200080; font-weight:bold; '>REM  </span>
+<span style='color:#200080; font-weight:bold; '>REM  </span><span style='color:#595979; '>Licensed under the Apache License, Version 2.0 (the ""License""); you may not use this </span>
+<span style='color:#200080; font-weight:bold; '>REM  </span><span style='color:#595979; '>file except in compliance with the License. You may obtain a copy of the License at </span>
+<span style='color:#200080; font-weight:bold; '>REM  </span><span style='color:#595979; '>http://www.apache.org/licenses/LICENSE-2.0  </span>
+<span style='color:#200080; font-weight:bold; '>REM  </span>
+<span style='color:#200080; font-weight:bold; '>REM  </span><span style='color:#595979; '>THIS CODE IS PROVIDED *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, </span>
+<span style='color:#200080; font-weight:bold; '>REM  </span><span style='color:#595979; '>EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED WARRANTIES OR </span>
+<span style='color:#200080; font-weight:bold; '>REM  </span><span style='color:#595979; '>CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE, MERCHANTABLITY OR </span>
+<span style='color:#200080; font-weight:bold; '>REM  </span><span style='color:#595979; '>NON-INFRINGEMENT. </span>
+<span style='color:#200080; font-weight:bold; '>REM </span>
+<span style='color:#200080; font-weight:bold; '>REM  </span><span style='color:#595979; '>See the Apache Version 2.0 License for specific language governing permissions and </span>
+<span style='color:#200080; font-weight:bold; '>REM  </span><span style='color:#595979; '>limitations under the License.</span>
+<span style='color:#200080; font-weight:bold; '>REM  </span><span style='color:#595979; '>------------------------------------------------------------------------------------</span>
+<span style='color:#200080; font-weight:bold; '>REM</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>file: gen-win-ssl-certs.bat</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>date: 2015-07-01</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>what: Procedure to create client auth certificate set for an ActiveMQ broker</span>
+<span style='color:#200080; font-weight:bold; '>REM       </span><span style='color:#595979; '>and an AMQPNet.Lite client. "keytool" is supplied by jdk.</span>
+<span style='color:#200080; font-weight:bold; '>REM       </span><span style='color:#595979; '>A user may change TODO: settings to match his setup.</span>
+<span style='color:#200080; font-weight:bold; '>REM</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>These files are created:</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>broker-jks.keystore   BROKER_KEYSTORE</span>
+<span style='color:#200080; font-weight:bold; '>REM                         </span><span style='color:#595979; '>ActiveMQ broker conf\activemq.xml broker sslContext.</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>broker-jks.truststore BROKER_TRUSTSTORE</span>
+<span style='color:#200080; font-weight:bold; '>REM                         </span><span style='color:#595979; '>ActiveMQ broker conf\activemq.xml broker sslContext.</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>ca.crt                CA_CERT</span>
+<span style='color:#200080; font-weight:bold; '>REM                         </span><span style='color:#595979; '>installed in client machine </span>
+<span style='color:#200080; font-weight:bold; '>REM                         </span><span style='color:#595979; '>Trusted Root Certification Authorities store</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>client.p12            CLIENT_PRIVATE_KEYS</span>
+<span style='color:#200080; font-weight:bold; '>REM                         </span><span style='color:#595979; '>installed in client machine Personal Certificates store.</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>client.crt            CLIENT_CERT</span>
+<span style='color:#200080; font-weight:bold; '>REM                         </span><span style='color:#595979; '>referred to/loaded by the C# application code.</span>
+<span style='color:#200080; font-weight:bold; '>REM</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>* The BROKER_KEYSTORE and BROKER_TRUSTSTORE do not need to be installed. The ActiveMQ</span>
+<span style='color:#200080; font-weight:bold; '>REM   </span><span style='color:#595979; '>broker refers to these files in conf\activemq.xml.</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>* CA_CERT and CLIENT_PRIVATE_KEYS are installed in the certificates stores </span>
+<span style='color:#200080; font-weight:bold; '>REM   </span><span style='color:#595979; '>of the client system.</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>* CLIENT_CERT is used in creating an X509CertificateCollection. It is the certfile in:</span>
+<span style='color:#200080; font-weight:bold; '>REM     </span><span style='color:#595979; '>ClientCertificates.Add(X509Certificate.CreateFromCertFile(certfile))</span>
+<span style='color:#200080; font-weight:bold; '>REM</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>The password for every store and certificate is "password".</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>TODO: Use better passwords.</span>
+
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>All certificates are created in this subfolder</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>TODO: Define where certificates are generated</span>
+<span style='color:#200080; font-weight:bold; '>SET</span> CERT_LOC<span style='color:#308080; '>=</span><span style='color:#007d45; '>%CD%</span><span style='color:#308080; '>\</span>certs
+
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>Define the CN of the self-signed certificate authority.</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>TODO: Define the CA's CN</span>
+<span style='color:#200080; font-weight:bold; '>SET</span> CA_CN<span style='color:#308080; '>=</span>reallly<span style='color:#308080; '>-</span>trust<span style='color:#308080; '>-</span>me.org
+
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>Define the CN of the broker.</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>This is the fqdn or hostname of the machine on which the ActiveMQ broker is running.</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>TODO: Define the broker CN:</span>
+<span style='color:#200080; font-weight:bold; '>SET</span> BROKER_CN<span style='color:#308080; '>=</span><span style='color:#008c00; '>71</span>.<span style='color:#008c00; '>71</span>.<span style='color:#008c00; '>71</span>.<span style='color:#008c00; '>71</span>
+
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>Define the CN of the client. A client presenting this certificate will be authenticated</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>as this user name in the ActiveMQ broker.</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>TODO: Define the client CN</span>
+<span style='color:#200080; font-weight:bold; '>SET</span> CLIENT_CN<span style='color:#308080; '>=</span>client
+
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>Define file names</span>
+<span style='color:#200080; font-weight:bold; '>SET</span>          CA_KEYSTORE<span style='color:#308080; '>=</span>ca<span style='color:#308080; '>-</span>jks.keystore
+<span style='color:#200080; font-weight:bold; '>SET</span>      BROKER_KEYSTORE<span style='color:#308080; '>=</span>broker<span style='color:#308080; '>-</span>jks.keystore
+<span style='color:#200080; font-weight:bold; '>SET</span>      CLIENT_KEYSTORE<span style='color:#308080; '>=</span>client<span style='color:#308080; '>-</span>jks.keystore
+<span style='color:#200080; font-weight:bold; '>SET</span>    BROKER_TRUSTSTORE<span style='color:#308080; '>=</span>broker<span style='color:#308080; '>-</span>jks.truststore
+<span style='color:#200080; font-weight:bold; '>SET</span>              CA_CERT<span style='color:#308080; '>=</span>ca.crt
+<span style='color:#200080; font-weight:bold; '>SET</span> BROKER_CERT_SIGN_REQ<span style='color:#308080; '>=</span>broker.csr
+<span style='color:#200080; font-weight:bold; '>SET</span>          BROKER_CERT<span style='color:#308080; '>=</span>broker.crt
+<span style='color:#200080; font-weight:bold; '>SET</span> CLIENT_CERT_SIGN_REQ<span style='color:#308080; '>=</span>client.csr
+<span style='color:#200080; font-weight:bold; '>SET</span>          CLIENT_CERT<span style='color:#308080; '>=</span>client.crt
+<span style='color:#200080; font-weight:bold; '>SET</span>  CLIENT_PRIVATE_KEYS<span style='color:#308080; '>=</span>client.p12
+
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>Define some repeated patterns identifying the various stores</span>
+<span style='color:#200080; font-weight:bold; '>SET</span>     CA_STORE<span style='color:#308080; '>=</span><span style='color:#308080; '>-</span>storetype jks <span style='color:#308080; '>-</span>keystore     <span style='color:#007d45; '>%CA_KEYSTORE%</span> <span style='color:#308080; '>-</span>storepass password
+<span style='color:#200080; font-weight:bold; '>SET</span> BROKER_STORE<span style='color:#308080; '>=</span><span style='color:#308080; '>-</span>storetype jks <span style='color:#308080; '>-</span>keystore <span style='color:#007d45; '>%BROKER_KEYSTORE%</span> <span style='color:#308080; '>-</span>storepass password
+<span style='color:#200080; font-weight:bold; '>SET</span> CLIENT_STORE<span style='color:#308080; '>=</span><span style='color:#308080; '>-</span>storetype jks <span style='color:#308080; '>-</span>keystore <span style='color:#007d45; '>%CLIENT_KEYSTORE%</span> <span style='color:#308080; '>-</span>storepass password
+<span style='color:#200080; font-weight:bold; '>SET</span> KEY_PASSWORD<span style='color:#308080; '>=</span><span style='color:#308080; '>-</span>keypass password
+
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>Recreate cert folder</span>
+<span style='color:#200080; font-weight:bold; '>rmdir</span> <span style='color:#308080; '>/</span>s <span style='color:#308080; '>/</span>q <span style='color:#007d45; '>%CERT_LOC%</span>
+timeout <span style='color:#308080; '>/</span>t <span style='color:#008c00; '>1</span> <span style='color:#308080; '>/</span>nobreak <span style='color:#308080; '>></span> <span style='color:#200080; font-weight:bold; '>nul</span>
+<span style='color:#200080; font-weight:bold; '>mkdir</span>       <span style='color:#007d45; '>%CERT_LOC%</span>
+<span style='color:#200080; font-weight:bold; '>pushd</span>       <span style='color:#007d45; '>%CERT_LOC%</span>
+
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>Create the certificate authority CA</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>-----------------------------------</span>
+keytool <span style='color:#007d45; '>%CA_STORE%</span> <span style='color:#007d45; '>%KEY_PASSWORD%</span> <span style='color:#308080; '>-</span>alias ca <span style='color:#308080; '>-</span>genkey <span style='color:#308080; '>^</span>
+        <span style='color:#308080; '>-</span>dname <span style='color:#1060b6; '>"O=Reallly Trust Me Inc.,CN=%CA_CN%"</span> <span style='color:#308080; '>-</span>validity <span style='color:#008c00; '>9999</span> <span style='color:#308080; '>-</span>ext bc<span style='color:#308080; '>:</span>c<span style='color:#308080; '>=</span>ca<span style='color:#308080; '>:</span>true
+keytool <span style='color:#007d45; '>%CA_STORE%</span>                <span style='color:#308080; '>-</span>alias ca <span style='color:#308080; '>-</span>exportcert <span style='color:#308080; '>-</span>rfc <span style='color:#308080; '>></span> <span style='color:#007d45; '>%CA_CERT%</span>
+
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>Create a key pair for the broker and sign it with the CA</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>--------------------------------------------------------</span>
+keytool <span style='color:#007d45; '>%BROKER_STORE%</span> <span style='color:#007d45; '>%KEY_PASSWORD%</span> <span style='color:#308080; '>-</span>alias broker <span style='color:#308080; '>-</span>genkey <span style='color:#308080; '>-</span>keyalg RSA <span style='color:#308080; '>-</span>keysize <span style='color:#008c00; '>2048</span> <span style='color:#308080; '>^</span>
+        <span style='color:#308080; '>-</span>dname <span style='color:#1060b6; '>"O=Broker,CN=%BROKER_CN%"</span> <span style='color:#308080; '>-</span>validity <span style='color:#008c00; '>9999</span> <span style='color:#308080; '>-</span>ext bc<span style='color:#308080; '>=</span>ca<span style='color:#308080; '>:</span>false <span style='color:#308080; '>-</span>ext eku<span style='color:#308080; '>=</span>serverAuth
+
+keytool <span style='color:#007d45; '>%BROKER_STORE%</span> <span style='color:#308080; '>-</span>alias broker <span style='color:#308080; '>-</span>certreq    <span style='color:#308080; '>-</span><span style='color:#200080; font-weight:bold; '>file</span> <span style='color:#007d45; '>%BROKER_CERT_SIGN_REQ%</span>
+keytool <span style='color:#007d45; '>%CA_STORE%</span>     <span style='color:#308080; '>-</span>alias ca <span style='color:#308080; '>-</span>gencert <span style='color:#308080; '>-</span>rfc <span style='color:#308080; '>-</span>infile <span style='color:#007d45; '>%BROKER_CERT_SIGN_REQ%</span> <span style='color:#308080; '>^</span>
+        <span style='color:#308080; '>-</span>outfile <span style='color:#007d45; '>%BROKER_CERT%</span> <span style='color:#308080; '>-</span>ext bc<span style='color:#308080; '>=</span>ca<span style='color:#308080; '>:</span>false <span style='color:#308080; '>-</span>ext eku<span style='color:#308080; '>=</span>serverAuth
+
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>Import CA and broker certificates into broker keystore</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>------------------------------------------------------</span>
+keytool <span style='color:#007d45; '>%BROKER_STORE%</span> <span style='color:#007d45; '>%KEY_PASSWORD%</span> <span style='color:#308080; '>-</span>importcert <span style='color:#308080; '>-</span>alias ca     <span style='color:#308080; '>-</span><span style='color:#200080; font-weight:bold; '>file</span>     <span style='color:#007d45; '>%CA_CERT%</span> <span style='color:#308080; '>-</span>noprompt
+keytool <span style='color:#007d45; '>%BROKER_STORE%</span> <span style='color:#007d45; '>%KEY_PASSWORD%</span> <span style='color:#308080; '>-</span>importcert <span style='color:#308080; '>-</span>alias broker <span style='color:#308080; '>-</span><span style='color:#200080; font-weight:bold; '>file</span> <span style='color:#007d45; '>%BROKER_CERT%</span>
+
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>Create a key pair for the client and sign it with the CA</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>--------------------------------------------------------</span>
+keytool <span style='color:#007d45; '>%CLIENT_STORE%</span> <span style='color:#007d45; '>%KEY_PASSWORD%</span> <span style='color:#308080; '>-</span>alias client <span style='color:#308080; '>-</span>genkey <span style='color:#308080; '>-</span>keyalg RSA <span style='color:#308080; '>-</span>keysize <span style='color:#008c00; '>2048</span> <span style='color:#308080; '>^</span>
+        <span style='color:#308080; '>-</span>dname <span style='color:#1060b6; '>"O=Client,CN=%CLIENT_CN%"</span> <span style='color:#308080; '>-</span>validity <span style='color:#008c00; '>9999</span> <span style='color:#308080; '>-</span>ext bc<span style='color:#308080; '>=</span>ca<span style='color:#308080; '>:</span>false <span style='color:#308080; '>-</span>ext eku<span style='color:#308080; '>=</span>clientAuth
+
+keytool <span style='color:#007d45; '>%CLIENT_STORE%</span> <span style='color:#308080; '>-</span>alias client <span style='color:#308080; '>-</span>certreq    <span style='color:#308080; '>-</span><span style='color:#200080; font-weight:bold; '>file</span> <span style='color:#007d45; '>%CLIENT_CERT_SIGN_REQ%</span>
+keytool <span style='color:#007d45; '>%CA_STORE%</span>     <span style='color:#308080; '>-</span>alias ca <span style='color:#308080; '>-</span>gencert <span style='color:#308080; '>-</span>rfc <span style='color:#308080; '>-</span>infile <span style='color:#007d45; '>%CLIENT_CERT_SIGN_REQ%</span> <span style='color:#308080; '>^</span>
+        <span style='color:#308080; '>-</span>outfile <span style='color:#007d45; '>%CLIENT_CERT%</span> <span style='color:#308080; '>-</span>ext bc<span style='color:#308080; '>=</span>ca<span style='color:#308080; '>:</span>false <span style='color:#308080; '>-</span>ext eku<span style='color:#308080; '>=</span>clientAuth
+
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>Import CA and client certs into client keystore</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>-----------------------------------------------</span>
+keytool <span style='color:#007d45; '>%CLIENT_STORE%</span> <span style='color:#007d45; '>%KEY_PASSWORD%</span> <span style='color:#308080; '>-</span>importcert <span style='color:#308080; '>-</span>alias ca     <span style='color:#308080; '>-</span><span style='color:#200080; font-weight:bold; '>file</span>     <span style='color:#007d45; '>%CA_CERT%</span> <span style='color:#308080; '>-</span>noprompt
+keytool <span style='color:#007d45; '>%CLIENT_STORE%</span> <span style='color:#007d45; '>%KEY_PASSWORD%</span> <span style='color:#308080; '>-</span>importcert <span style='color:#308080; '>-</span>alias client <span style='color:#308080; '>-</span><span style='color:#200080; font-weight:bold; '>file</span> <span style='color:#007d45; '>%CLIENT_CERT%</span> <span style='color:#308080; '>-</span>noprompt
+
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>Export client private key and cert trust chain to Personal Information Exchange .p12</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>------------------------------------------------------------------------------------</span>
+keytool <span style='color:#308080; '>-</span>v <span style='color:#308080; '>-</span>importkeystore <span style='color:#308080; '>-</span>srckeystore <span style='color:#007d45; '>%CLIENT_KEYSTORE%</span> <span style='color:#308080; '>-</span>srcstorepass password <span style='color:#308080; '>^</span>
+        <span style='color:#308080; '>-</span>srcalias client <span style='color:#308080; '>-</span>destkeystore <span style='color:#007d45; '>%CLIENT_PRIVATE_KEYS%</span> <span style='color:#308080; '>-</span>deststorepass password <span style='color:#308080; '>^</span>
+		<span style='color:#308080; '>-</span>destkeypass password <span style='color:#308080; '>-</span>deststoretype PKCS12 <span style='color:#308080; '>-</span>destalias client
+
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>Create a trust store for the broker, import the CA cert</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>-------------------------------------------------------</span>
+keytool <span style='color:#308080; '>-</span>storetype jks <span style='color:#308080; '>-</span>keystore <span style='color:#007d45; '>%BROKER_TRUSTSTORE%</span> <span style='color:#308080; '>-</span>storepass password <span style='color:#007d45; '>%KEY_PASSWORD%</span> <span style='color:#308080; '>^</span>
+        <span style='color:#308080; '>-</span>importcert <span style='color:#308080; '>-</span>alias     ca <span style='color:#308080; '>-</span><span style='color:#200080; font-weight:bold; '>file</span>     <span style='color:#007d45; '>%CA_CERT%</span> <span style='color:#308080; '>-</span>noprompt
+
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>Make client cert legible in .NET</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>--------------------------------</span>
+dos2unix <span style='color:#007d45; '>%CLIENT_CERT%</span>
+
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>Clean up</span>
+<span style='color:#200080; font-weight:bold; '>REM </span><span style='color:#595979; '>--------</span>
+<span style='color:#200080; font-weight:bold; '>del</span> <span style='color:#007d45; '>%CA_KEYSTORE%</span>
+<span style='color:#200080; font-weight:bold; '>del</span> <span style='color:#007d45; '>%BROKER_CERT_SIGN_REQ%</span>
+<span style='color:#200080; font-weight:bold; '>del</span> <span style='color:#007d45; '>%BROKER_CERT%</span>
+<span style='color:#200080; font-weight:bold; '>del</span> <span style='color:#007d45; '>%CLIENT_CERT_SIGN_REQ%</span>
+<span style='color:#200080; font-weight:bold; '>del</span> <span style='color:#007d45; '>%CLIENT_STORE%</span>
+<span style='color:#200080; font-weight:bold; '>popd</span>
+</pre>
+</body>
+</html>
+

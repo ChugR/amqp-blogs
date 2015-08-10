@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>HelloWorld-client-certs.cs</title>
+ </head>
+<body>
+<a href="HelloWorld-client-certs.cs.txt">Undecorated source</a>
+
+<h1>Helloworld-client-certs.cs</h1>
+
+<pre style='color:#000020;background:#f6f8ff;'><span style='color:#595979; '>//  ------------------------------------------------------------------------------------</span>
+<span style='color:#595979; '>//  Copyright (c) 2015 Red Hat, Inc.</span>
+<span style='color:#595979; '>//  All rights reserved.</span>
+<span style='color:#595979; '>//</span>
+<span style='color:#595979; '>//  Licensed under the Apache License, Version 2.0 (the ""License""); you may not use this</span>
+<span style='color:#595979; '>//  file except in compliance with the License. You may obtain a copy of the License at</span>
+<span style='color:#595979; '>//  </span><span style='color:#5555dd; '>http://www.apache.org/licenses/LICENSE-2.0</span>
+<span style='color:#595979; '>//</span>
+<span style='color:#595979; '>//  THIS CODE IS PROVIDED *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,</span>
+<span style='color:#595979; '>//  EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED WARRANTIES OR</span>
+<span style='color:#595979; '>//  CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE, MERCHANTABLITY OR</span>
+<span style='color:#595979; '>//  NON-INFRINGEMENT.</span>
+<span style='color:#595979; '>//</span>
+<span style='color:#595979; '>//  See the Apache Version 2.0 License for specific language governing permissions and</span>
+<span style='color:#595979; '>//  limitations under the License.</span>
+<span style='color:#595979; '>//  ------------------------------------------------------------------------------------</span>
+
+<span style='color:#595979; '>//</span>
+<span style='color:#595979; '>// HelloWorld-client-certs</span>
+<span style='color:#595979; '>//</span>
+<span style='color:#595979; '>// Command line:</span>
+<span style='color:#595979; '>//   HelloWorld-client-certs [brokerUrl [brokerEndpointAddress]]</span>
+<span style='color:#595979; '>//</span>
+<span style='color:#200080; font-weight:bold; '>using</span> System<span style='color:#406080; '>;</span>
+<span style='color:#200080; font-weight:bold; '>using</span> System<span style='color:#308080; '>.</span>Linq<span style='color:#406080; '>;</span>
+<span style='color:#200080; font-weight:bold; '>using</span> Amqp<span style='color:#406080; '>;</span>
+<span style='color:#200080; font-weight:bold; '>using</span> Amqp<span style='color:#308080; '>.</span>Framing<span style='color:#406080; '>;</span>
+<span style='color:#200080; font-weight:bold; '>using</span> Amqp<span style='color:#308080; '>.</span>Types<span style='color:#406080; '>;</span>
+<span style='color:#200080; font-weight:bold; '>using</span> System<span style='color:#308080; '>.</span>Security<span style='color:#406080; '>;</span>
+<span style='color:#200080; font-weight:bold; '>using</span> System<span style='color:#308080; '>.</span>Security<span style='color:#308080; '>.</span>Cryptography<span style='color:#406080; '>;</span>
+<span style='color:#200080; font-weight:bold; '>using</span> System<span style='color:#308080; '>.</span>Security<span style='color:#308080; '>.</span>Cryptography<span style='color:#308080; '>.</span>X509Certificates<span style='color:#406080; '>;</span>
+<span style='color:#200080; font-weight:bold; '>using</span> System<span style='color:#308080; '>.</span>Security<span style='color:#308080; '>.</span>Permissions<span style='color:#406080; '>;</span>
+<span style='color:#200080; font-weight:bold; '>using</span> System<span style='color:#308080; '>.</span>Threading<span style='color:#406080; '>;</span>
+<span style='color:#200080; font-weight:bold; '>using</span> System<span style='color:#308080; '>.</span>Threading<span style='color:#308080; '>.</span>Tasks<span style='color:#406080; '>;</span>
+
+<span style='color:#200080; font-weight:bold; '>namespace</span> HelloWorld_simple
+<span style='color:#406080; '>{</span>
+  <span style='color:#200080; font-weight:bold; '>class</span> HelloWorld_simple
+  <span style='color:#406080; '>{</span>
+    <span style='color:#200080; font-weight:bold; '>static</span> async Task<span style='color:#308080; '>&lt;</span><span style='color:#200080; font-weight:bold; '>int</span><span style='color:#308080; '>></span> SslConnectionTestAsync<span style='color:#308080; '>(</span><span style='color:#200080; font-weight:bold; '>string</span> brokerUrl<span style='color:#308080; '>,</span> <span style='color:#200080; font-weight:bold; '>string</span> address<span style='color:#308080; '>,</span> <span style='color:#200080; font-weight:bold; '>string</span> certfile<span style='color:#308080; '>)</span>
+    <span style='color:#406080; '>{</span>
+      <span style='color:#200080; font-weight:bold; '>try</span>
+      <span style='color:#406080; '>{</span>
+        ConnectionFactory factory <span style='color:#308080; '>=</span> <span style='color:#200080; font-weight:bold; '>new</span> ConnectionFactory<span style='color:#308080; '>(</span><span style='color:#308080; '>)</span><span style='color:#406080; '>;</span>
+        factory<span style='color:#308080; '>.</span>TCP<span style='color:#308080; '>.</span>NoDelay <span style='color:#308080; '>=</span> <span style='color:#200080; font-weight:bold; '>true</span><span style='color:#406080; '>;</span>
+        factory<span style='color:#308080; '>.</span>TCP<span style='color:#308080; '>.</span>SendBufferSize <span style='color:#308080; '>=</span> <span style='color:#008c00; '>16</span> <span style='color:#308080; '>*</span> <span style='color:#008c00; '>1024</span><span style='color:#406080; '>;</span>
+        factory<span style='color:#308080; '>.</span>TCP<span style='color:#308080; '>.</span>SendTimeout <span style='color:#308080; '>=</span> <span style='color:#008c00; '>30000</span><span style='color:#406080; '>;</span>
+        factory<span style='color:#308080; '>.</span>TCP<span style='color:#308080; '>.</span>ReceiveBufferSize <span style='color:#308080; '>=</span> <span style='color:#008c00; '>16</span> <span style='color:#308080; '>*</span> <span style='color:#008c00; '>1024</span><span style='color:#406080; '>;</span>
+        factory<span style='color:#308080; '>.</span>TCP<span style='color:#308080; '>.</span>ReceiveTimeout <span style='color:#308080; '>=</span> <span style='color:#008c00; '>30000</span><span style='color:#406080; '>;</span>
+          
+        factory<span style='color:#308080; '>.</span>SSL<span style='color:#308080; '>.</span>RemoteCertificateValidationCallback <span style='color:#308080; '>=</span> <span style='color:#308080; '>(</span>a<span style='color:#308080; '>,</span> b<span style='color:#308080; '>,</span> c<span style='color:#308080; '>,</span> d<span style='color:#308080; '>)</span> <span style='color:#308080; '>=</span><span style='color:#308080; '>></span> <span style='color:#200080; font-weight:bold; '>true</span><span style='color:#406080; '>;</span>
+        factory<span style='color:#308080; '>.</span>SSL<span style='color:#308080; '>.</span>ClientCertificates<span style='color:#308080; '>.</span>Add<span style='color:#308080; '>(</span>X509Certificate<span style='color:#308080; '>.</span>CreateFromCertFile<span style='color:#308080; '>(</span>certfile<span style='color:#308080; '>)</span><span style='color:#308080; '>)</span><span style='color:#406080; '>;</span>
+        factory<span style='color:#308080; '>.</span>SSL<span style='color:#308080; '>.</span>CheckCertificateRevocation <span style='color:#308080; '>=</span> <span style='color:#200080; font-weight:bold; '>false</span><span style='color:#406080; '>;</span>
+          
+        factory<span style='color:#308080; '>.</span>AMQP<span style='color:#308080; '>.</span>MaxFrameSize <span style='color:#308080; '>=</span> <span style='color:#008c00; '>64</span> <span style='color:#308080; '>*</span> <span style='color:#008c00; '>1024</span><span style='color:#406080; '>;</span>
+        factory<span style='color:#308080; '>.</span>AMQP<span style='color:#308080; '>.</span>HostName <span style='color:#308080; '>=</span> <span style='color:#800000; '>"</span><span style='color:#1060b6; '>host.example.com</span><span style='color:#800000; '>"</span><span style='color:#406080; '>;</span>
+        factory<span style='color:#308080; '>.</span>AMQP<span style='color:#308080; '>.</span>ContainerId <span style='color:#308080; '>=</span> <span style='color:#800000; '>"</span><span style='color:#1060b6; '>amq.topic</span><span style='color:#800000; '>"</span><span style='color:#406080; '>;</span>
+           
+        Address sslAddress <span style='color:#308080; '>=</span> <span style='color:#200080; font-weight:bold; '>new</span> Address<span style='color:#308080; '>(</span>brokerUrl<span style='color:#308080; '>)</span><span style='color:#406080; '>;</span>
+        Connection connection <span style='color:#308080; '>=</span> await factory<span style='color:#308080; '>.</span>CreateAsync<span style='color:#308080; '>(</span>sslAddress<span style='color:#308080; '>)</span><span style='color:#406080; '>;</span>
+
+        Session session <span style='color:#308080; '>=</span> <span style='color:#200080; font-weight:bold; '>new</span> Session<span style='color:#308080; '>(</span>connection<span style='color:#308080; '>)</span><span style='color:#406080; '>;</span>
+        SenderLink sender <span style='color:#308080; '>=</span> <span style='color:#200080; font-weight:bold; '>new</span> SenderLink<span style='color:#308080; '>(</span>session<span style='color:#308080; '>,</span> <span style='color:#800000; '>"</span><span style='color:#1060b6; '>sender1</span><span style='color:#800000; '>"</span><span style='color:#308080; '>,</span> address<span style='color:#308080; '>)</span><span style='color:#406080; '>;</span>
+        ReceiverLink receiver <span style='color:#308080; '>=</span> <span style='color:#200080; font-weight:bold; '>new</span> ReceiverLink<span style='color:#308080; '>(</span>session<span style='color:#308080; '>,</span> <span style='color:#800000; '>"</span><span style='color:#1060b6; '>helloworld-receiver</span><span style='color:#800000; '>"</span><span style='color:#308080; '>,</span> address<span style='color:#308080; '>)</span><span style='color:#406080; '>;</span>
+           
+        Message helloOut <span style='color:#308080; '>=</span> <span style='color:#200080; font-weight:bold; '>new</span> Message<span style='color:#308080; '>(</span><span style='color:#800000; '>"</span><span style='color:#1060b6; '>Hello - using client cert</span><span style='color:#800000; '>"</span><span style='color:#308080; '>)</span><span style='color:#406080; '>;</span>
+        await sender<span style='color:#308080; '>.</span>SendAsync<span style='color:#308080; '>(</span>helloOut<span style='color:#308080; '>)</span><span style='color:#406080; '>;</span>
+
+        Message helloIn <span style='color:#308080; '>=</span> await receiver<span style='color:#308080; '>.</span>ReceiveAsync<span style='color:#308080; '>(</span><span style='color:#308080; '>)</span><span style='color:#406080; '>;</span>
+        receiver<span style='color:#308080; '>.</span>Accept<span style='color:#308080; '>(</span>helloIn<span style='color:#308080; '>)</span><span style='color:#406080; '>;</span>
+
+        await connection<span style='color:#308080; '>.</span>CloseAsync<span style='color:#308080; '>(</span><span style='color:#308080; '>)</span><span style='color:#406080; '>;</span>
+
+        Console<span style='color:#308080; '>.</span>WriteLine<span style='color:#308080; '>(</span><span style='color:#800000; '>"</span><span style='color:#1060b6; '>{0}</span><span style='color:#800000; '>"</span><span style='color:#308080; '>,</span> helloIn<span style='color:#308080; '>.</span>Body<span style='color:#308080; '>.</span>ToString<span style='color:#308080; '>(</span><span style='color:#308080; '>)</span><span style='color:#308080; '>)</span><span style='color:#406080; '>;</span>
+
+        Console<span style='color:#308080; '>.</span>WriteLine<span style='color:#308080; '>(</span><span style='color:#800000; '>"</span><span style='color:#1060b6; '>Press enter key to exit...</span><span style='color:#800000; '>"</span><span style='color:#308080; '>)</span><span style='color:#406080; '>;</span>
+        Console<span style='color:#308080; '>.</span>ReadLine<span style='color:#308080; '>(</span><span style='color:#308080; '>)</span><span style='color:#406080; '>;</span>
+        <span style='color:#200080; font-weight:bold; '>return</span> <span style='color:#008c00; '>0</span><span style='color:#406080; '>;</span>
+      <span style='color:#406080; '>}</span>
+      <span style='color:#200080; font-weight:bold; '>catch</span> <span style='color:#308080; '>(</span>Exception e<span style='color:#308080; '>)</span>
+      <span style='color:#406080; '>{</span>
+        Console<span style='color:#308080; '>.</span>WriteLine<span style='color:#308080; '>(</span><span style='color:#800000; '>"</span><span style='color:#1060b6; '>Exception {0}.</span><span style='color:#800000; '>"</span><span style='color:#308080; '>,</span> e<span style='color:#308080; '>)</span><span style='color:#406080; '>;</span>
+        <span style='color:#200080; font-weight:bold; '>return</span> <span style='color:#008c00; '>1</span><span style='color:#406080; '>;</span>
+      <span style='color:#406080; '>}</span>
+    <span style='color:#406080; '>}</span>
+
+    <span style='color:#200080; font-weight:bold; '>static</span> <span style='color:#200080; font-weight:bold; '>void</span> Main<span style='color:#308080; '>(</span><span style='color:#200080; font-weight:bold; '>string</span><span style='color:#308080; '>[</span><span style='color:#308080; '>]</span> args<span style='color:#308080; '>)</span>
+    <span style='color:#406080; '>{</span>
+      <span style='color:#200080; font-weight:bold; '>string</span> broker <span style='color:#308080; '>=</span> args<span style='color:#308080; '>.</span>Length <span style='color:#308080; '>></span><span style='color:#308080; '>=</span> <span style='color:#008c00; '>1</span> ? args<span style='color:#308080; '>[</span><span style='color:#008c00; '>0</span><span style='color:#308080; '>]</span> <span style='color:#308080; '>:</span> <span style='color:#800000; '>"</span><span style='color:#1060b6; '>amqps://client:password@host.example.com:5671</span><span style='color:#800000; '>"</span><span style='color:#406080; '>;</span>
+      <span style='color:#200080; font-weight:bold; '>string</span> address <span style='color:#308080; '>=</span> args<span style='color:#308080; '>.</span>Length <span style='color:#308080; '>></span><span style='color:#308080; '>=</span> <span style='color:#008c00; '>2</span> ? args<span style='color:#308080; '>[</span><span style='color:#008c00; '>1</span><span style='color:#308080; '>]</span> <span style='color:#308080; '>:</span> <span style='color:#800000; '>"</span><span style='color:#1060b6; '>amq.topic</span><span style='color:#800000; '>"</span><span style='color:#406080; '>;</span>
+      Task<span style='color:#308080; '>&lt;</span><span style='color:#200080; font-weight:bold; '>int</span><span style='color:#308080; '>></span> task <span style='color:#308080; '>=</span> SslConnectionTestAsync<span style='color:#308080; '>(</span>broker<span style='color:#308080; '>,</span> address<span style='color:#308080; '>,</span> <span style='color:#800000; '>"</span><span style='color:#1060b6; '>D:\\FULL\\PATH\\TO\\client.crt</span><span style='color:#800000; '>"</span><span style='color:#308080; '>)</span><span style='color:#406080; '>;</span>
+      task<span style='color:#308080; '>.</span>Wait<span style='color:#308080; '>(</span><span style='color:#308080; '>)</span><span style='color:#406080; '>;</span>
+    <span style='color:#406080; '>}</span>
+  <span style='color:#406080; '>}</span>
+<span style='color:#406080; '>}</span>
+</pre>
