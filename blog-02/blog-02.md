@@ -75,7 +75,7 @@ For more complicated installations you may want more descriptive file names. The
 
 ### Certificate generation script
 
-Generate your certificate files with [this script](https://people.apache.org/~chug/blog/blog-02/gen-win-ssl-certs.bat.html)
+Generate your certificate files with [this script](https://people.apache.org/~chug/blog/wordpress-02/gen-win-ssl-certs.bat.html)
 
 ### Distribute Certificates
 
