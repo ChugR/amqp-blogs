@@ -66,7 +66,7 @@ The steps to perform are:
 
 In this script you need to adjust some variables to match the environment in which the scripts will be used. 
 
- * CERT_LOC The folder where all the certificates are generated and stored. The default is *.\keys* and that is usually adequate for test purposes.
+ * CERT_LOC The folder where all the certificates are generated and stored. The default is *.\certs* and that is usually adequate for test purposes.
  * CA_CN The name of the self-signed certificate authority this script creates. There are no limits on this value but use some common sense and don't create a name that conflicts with any public certificate authority.
  * BROKER_CN This name must be that public hostname of the broker system. This is the name in the connection URL that the client uses to access the broker.
  * CLIENT_CN This is the client's username used in the client certificate.
@@ -100,12 +100,12 @@ On client systems that use TLS Handshake and Client Certificate the client needs
 
 There is no special installation required for the certificate files. They must be readable during broker start up.
 
-Assume that you have run the generation script in the broker's root folder. The certificates will be in folder *.\keys*. In the broker configuration file the key stores are loaded by adding these lines to file *.\conf\activemq.xml*.
+Assume that you have run the generation script in the broker's root folder. The certificates will be in folder *.\certs*. In the broker configuration file the key stores are loaded by adding these lines to file *.\conf\activemq.xml*.
 
     <sslContext>
       <sslContext
-        keyStore="${activemq.conf}/../keys/broker-jks.keystore" keyStorePassword="password"
-        trustStore="${activemq.conf}/../keys/broker-jks.truststore" trustStorePassword="password"/>
+        keyStore="${activemq.conf}/../certs/broker-jks.keystore" keyStorePassword="password"
+        trustStore="${activemq.conf}/../certs/broker-jks.truststore" trustStorePassword="password"/>
     </sslContext>
 
 ### Creating the AMQPS TLS Transport Connector for TLS Handshake Only
