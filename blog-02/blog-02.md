@@ -1,8 +1,8 @@
-# AMQP.Net Lite Client, A-MQ Broker, and TLS/SSL
+# Red Hat JBoss AMQP - Securing Client-Broker Connections with TLS/SSL
 
 In this post I'm going to show how to encrypt the communications between the Red Hat JBoss A-MQ (A-MQ) broker and the AMQP.Net Lite (Lite) client. 
 
-  * **Disclaimer**: This article is a demonstration of the security concepts with concrete examples and recipes you can use for testing. It is not a manual for securing a public installation large or small.
+  * **Disclaimer**: This article is a demonstration of the security concepts with concrete examples and recipes you can use for testing on a private network. It is not a manual for securing clients and brokers on a public network nor is it a tutorial on TLS/SSL in .NET or Java.
 
 ## Overview
 
