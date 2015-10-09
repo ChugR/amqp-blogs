@@ -32,13 +32,16 @@ This section describes ACL processing associated with QDR network events
 
 ### Event: TCP connect
 * **allow**.  ACL is not involved in connection setup
+
 ### Event: SSL
 * **allow**.  ACL is not involved in connection setup
 
 ### Event: AMQP TLS 
 * **allow**. ACL is not involved in AMQP Handshake
+
 ### Event: AMQP SASL
 * **allow**. ACL is not involved in AMQP Handshake
+
 ### Event: AMQP AMQP
 * **allow**. ACL is not involved in AMQP Handshake
 
